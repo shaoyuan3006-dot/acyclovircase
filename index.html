@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="zh-TW" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacist Clinical Training Simulator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17">function updateStats(){}
+
+function showChineseChallengeIntro() {
+  const dialogueBox = document.getElementById('dialogue-box');
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+  const speakerAvatar = document.getElementById('speaker-avatar');
+  const speakerName = document.getElementById('speaker-name');
+  const speakerRole = document.getElementById('speaker-role');
+
+  if (dialogueBox) dialogueBox.classList.remove('hidden');
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+  if (speakerAvatar) {
+    speakerAvatar.textContent = '⚠️';
+    speakerAvatar.className = 'w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br from-amber-400 to-orange-600';
+  }
+  if (speakerName) speakerName.textContent = '中文情境對答挑戰';
+  if (speakerRole) speakerRole.textContent = 'Scenario challenge';
+  if (questionText) {
+    questionText.textContent = '以下開始中文情境對答挑戰，答題時間設有限制（會註記在各題），請盡快做出最適當的答覆，了解請按下方「繼續」進入問答。';
+  }
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <button type="button" onclick="showChineseScenario()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all">
+        繼續
+      </button>
+    `;
+  }
+}
+
+function showChineseScenario() {
+  const speakerAvatar = document.getElementById('speaker-avatar');
+  const speakerName = document.getElementById('speaker-name');
+  const speakerRole = document.getElementById('speaker-role');
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+  if (speakerAvatar) {
+    speakerAvatar.textContent = '🏥';
+    speakerAvatar.className = 'w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br from-blue-500 to-slate-700';
+  }
+  if (speakerName) speakerName.textContent = '電梯間情境';
+  if (speakerRole) speakerRole.textContent = '中文情境對答挑戰';
+  if (questionText) {
+    questionText.innerHTML = `
+      <div class="space-y-4 text-zinc-100 leading-relaxed">
+        <p>（來到了電梯間，神內醫師與藥師在討論病人病情。）</p>
+        <p><span class="text-blue-300 font-semibold">醫師：</span>「2611床之前去看的診所醫師跟我們院內急診的醫師超糊塗的，竟然沒有注意到病人腎功能不好，劑量開過高導致病人中樞神經副作用。你覺得要不要通報病安？」</p>
+        <p><span class="text-emerald-300 font-semibold">藥師：</span>「唉…讓我思考一下，2611床病人真的很衰。」</p>
+        <p class="text-amber-300 font-semibold">殊不知，2611床的病人家屬剛好聽到醫師的言論，因此破口大罵……</p>
+      </div>
+    `;
+  }
+  if (answerOptions) {
+    answerOptions.innerHTML = '';
+  }
+}
+
+</script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Noto Sans TC', sans-serif; }
+    
+    .pulse-gentle {
+      animation: pulseGentle 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulseGentle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .character-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .character-hover:hover {
+      transform: translateY(-4px);
+      filter: brightness(1.1);
+    }
+    
+    .dialogue-enter {
+      animation: dialogueSlide 0.4s ease-out;
+    }
+    
+    @keyframes dialogueSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .option-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .option-btn:hover {
+      transform: translateX(8px);
+    }
+    
+    .vitals-display {
+      font-family: 'Courier New', monospace;
+    }
+    
+    .ecg-line {
+      animation: ecgMove 2s linear infinite;
+    }
+    
+    @keyframes ecgMove {
+      from { stroke-dashoffset: 100; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 overflow-auto">
+  <div id="app-container" class="h-full w-full flex flex-col"><!-- Team Modal -->
+   <div id="group-info-modal" class="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="w-full max-w-lg bg-slate-800 border border-slate-600 rounded-3xl p-6 shadow-2xl">
+     <div class="flex items-start justify-between gap-4">
+      <div>
+       <h2 class="text-white text-2xl font-bold">Team Information Required</h2>
+       <p class="text-zinc-200 text-sm mt-2">Please enter your Class and Group name before starting. This browser will remember and update the same team record automatically.</p>
+      </div>
+      <div class="text-4xl">📝</div>
+     </div>
+     <div class="mt-6 space-y-4">
+      <div>
+       <label for="class-input" class="block text-slate-200 text-sm font-medium mb-2">Class</label>
+       <input id="class-input" type="text" class="w-full rounded-xl border border-slate-600 bg-blue-950 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="" />
+      </div>
+      <div>
+       <label for="group-input" class="block text-slate-200 text-sm font-medium mb-2">Group name</label>
+       <input id="group-input" type="text" class="w-full rounded-xl border border-slate-600 bg-blue-950 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="" />
+      </div>
+      <p id="group-form-error" class="hidden text-red-300 text-sm">Please provide both Class and Group name.</p>
+     </div>
+     <div class="mt-6">
+      <button onclick="saveGroupInfo()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors">Start / Continue</button>
+     </div>
+     <div class="mt-6">
+      
+     </div>
+    </div>
+   </div><!-- Header -->
+   <header class="bg-gradient-to-r from-blue-950 to-slate-900 px-6 py-4 shadow-lg flex-shrink-0">
+    <div class="flex items-center justify-between mb-3">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="scenario-title" class="text-white text-xl font-bold">Pharmacist Clinical Training Simulator</h1>
+       <p class="text-blue-200 text-sm">Altered consciousness with jerky convulsion after herpes zoster treatment</p>
+       <p class="text-zinc-400 text-xs mt-1">教案設計者: 崇鈺老師研究室團隊 (Shao-Yuan Hao)</p>
+<!-- License & Attribution -->
+<div class="mt-2 text-[11px] text-zinc-400 leading-relaxed">
+<p class="text-blue-300 font-medium">License & Attribution</p>
+<p>CC BY-NC-SA 4.0</p>
+<p>Author: Shao-Yuan Hao (郝紹媛)</p>
+<p>Affiliation: Kaohsiung Medical University</p>
+<p>
+This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+</p>
+</div> 
+     <div id="score-display" class="bg-white/10 rounded-lg px-4 py-2"><span class="text-blue-200 text-sm">Learning Progress</span> <span id="progress-text" class="text-white font-bold ml-2">0 / 11</span>
+     </div>
+    </div><!-- Background Scenario -->
+    <div class="bg-blue-950/50 border border-slate-600 rounded-xl p-4 text-sm text-slate-200">
+     <p class="font-bold text-blue-300 mb-2">📋 Case Background:</p>
+     <p>A 66-year-old male patient with end-stage renal disease, undergoing hemodialysis every Tuesday, Thursday, and Saturday at KMUH, was transferred from the emergency room to the neurological intensive care unit on March 22 due to confusion, consciousness disturbance, and intermittent jerky movements.</p>
+    </div>
+   </header><!-- Main Content -->
+   <main class="flex-1 flex flex-col lg:flex-row gap-4 p-4 min-h-0"><!-- Left Panel - Patient Info -->
+    <aside class="lg:w-80 flex-shrink-0 space-y-4"><!-- Patient Card -->
+     <div class="bg-slate-800 rounded-2xl p-4 border border-slate-600">
+      <div class="flex items-center gap-3 mb-4">
+       <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl">
+        👤
+       </div>
+       <div>
+        <h3 id="patient-name" class="text-white font-bold">66-year-old male with altered consciousness</h3>
+        <p class="text-zinc-400 text-sm">66 years old / Male / Retired taxi driver / Lives alone</p>
+       </div>
+      </div>
+      <div class="text-zinc-200 text-sm bg-slate-800/70 rounded-lg p-3">
+       <p><span class="text-zinc-400">Admission Date:</span> March 22</p>
+       <p class="mt-1"><span class="text-zinc-400">Admission Reason:</span> Confusion, consciousness disturbance, and jerky convulsion in four limbs since last night</p>
+       <p class="mt-1"><span class="text-zinc-400">Major Comorbidity:</span> ESRD under hemodialysis every Tuesday, Thursday, and Saturday at KMUH</p>
+       <p class="mt-1"><span class="text-zinc-400">Recent Diagnosis:</span> T2-3 / T-spine herpes zoster treated with oral medications</p>
+       <p class="mt-1"><span class="text-zinc-400">Functional Status:</span> Partial ADL dependence; walker use after traffic accident 2 years ago</p>
+       <p class="mt-1"><span class="text-zinc-400">Social Support:</span> Lives alone; friend visits almost daily after work</p>
+      </div>
+     </div><!-- Dropdowns -->
+     <div class="space-y-3"><!-- Admission Note -->
+      <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">📋</span> <span class="text-white font-medium">Admission Note</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></summary>
+       <div class="px-4 pb-4 space-y-3 text-sm text-zinc-200">
+        <div>
+         <p class="text-cyan-400 font-medium mb-1">General Data:</p>
+         <p>Admission Date: 3/22</p>
+         <p>Age / Sex: 66-year-old male</p>
+         <p>Transfer: Emergency room to neurological intensive care unit due to confusion</p>
+         <p>Contact History: None</p>
+         <p>Travel History (Self / Family / Friends): None / None / None</p>
+         <p>Symptoms: Fever</p>
+         <p>Occupation: Taxi driver; retired 2 years ago due to gait disturbance after traffic accident</p>
+         <p>Cluster History: None</p>
+        </div>
+        <div>
+         <p class="text-cyan-400 font-medium mb-1">Chief Complaint:</p>
+         <p>Consciousness disturbance and jerky convulsion in four limbs since last night.</p>
+        </div>
+        <div>
+         <p class="text-cyan-400 font-medium mb-1">Present Illness:</p>
+         <p class="mb-2">His ADL was partially dependent, and he walked with a walker after a traffic accident 2 years ago. Spinal lesion was denied. He lives alone; a friend visits almost every day after work around 9 PM and helps with bathing and housekeeping.</p>
+         <p class="mb-2">According to his friend, he has been retired from taxi driving and using a walker since the traffic accident 2 years ago. He visited a local clinic on 3/18 and was told he had T-spine herpes zoster. Oral medication, 2 tablets five times daily, was prescribed.</p>
+         <p class="mb-2">He first felt general discomfort on 3/19 during hemodialysis at KMUH and complained of a skin rash on his back. Hemodialysis was stopped 1.5 hours early due to discomfort. On 3/20, he complained of dizziness, general soreness, and right chest pain. There was no headache, fever, neck pain, new focal weakness, or recent URI, UTI, or GI upset symptoms.</p>
+         <p class="mb-2">His friend mentioned personality change and hallucinations after he moved into a new house 3 months ago. No seizure-like episode had been noticed. TOCC, alcohol use, and illicit drug use were denied.</p>
+         <p class="mb-2">He visited the ED on the morning of 3/20 due to right chest pain. Initial status was E4V5M6, T 36.1°C, pulse 100/min, and respiratory rate 18/min. Morphine was used, and Gabapentin 100 mg QID, acyclovir 200 mg QID, and Ultracet 1 tablet QID were prescribed for T2-3 herpes zoster; then he was discharged.</p>
+         <p class="mb-2">After returning home, irrelevant speech and mild agitation were found, with vomiting 3 times. There was no headache, neck pain, double vision, decreased consciousness, head injury, or limb convulsion. He was brought back to the ED in the afternoon on the same day.</p>
+         <p class="mb-2">At the ED, initial vital signs showed T 37.0°C, pulse 91/min, respiratory rate 20/min, BP 196/87 mmHg, E4V4M5-6, and finger-stick glucose 340 mg/dL. EKG showed normal sinus rhythm. Lab data showed no leukocytosis or elevated CRP, but NT-proBNP was &gt;70000.0 and mild hypercapnia was noted (CO2 49.7, pH 7.375).</p>
+         <p class="mb-2">Brain CT showed no hemorrhage, dilated ventricles suspected to be related to brain atrophy, and a right medial frontal small hypodense lesion. Chest X-ray revealed bilateral pleural effusion (R&gt;L) and bilateral increased infiltration.</p>
+         <p>Agitation and irrelevant speech persisted, associated with irregular limb convulsions and stereotypic movements including bilateral upper limb circling, lower limb kicking, chewing, or spitting. Delirium was suspected. He ate a small amount for dinner without choking. Haloperidol was prescribed due to agitation, and he slept well. However, consciousness disturbance with intermittent jerky limb movements was found the next morning. Under the impression of CNS infection, Neurology was consulted and he was admitted to the NICU for further management.</p>
+        </div>
+       </div>
+      </details><!-- Nursing Notes -->
+      <!-- Medical / Personal / Family History -->
+      <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">📚</span> <span class="text-white font-medium">Past / Personal / Family History</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></summary>
+       <div class="px-4 pb-4 space-y-4 text-sm text-zinc-200">
+        <div>
+         <p class="text-cyan-400 font-medium mb-2">Past History:</p>
+         <ul class="list-disc list-inside space-y-1">
+          <li>End-stage renal disease under hemodialysis QW2, 4, 6 at KMUH</li>
+          <li>Hypertension</li>
+          <li>Type 2 diabetes mellitus under insulin aspart 18 units TID and insulin glargine 18 units HS</li>
+         </ul>
+        </div>
+        <div>
+         <p class="text-cyan-400 font-medium mb-2">Personal History:</p>
+         <ul class="list-disc list-inside space-y-1">
+          <li>Allergy history: Denied</li>
+          <li>Alcohol: Denied</li>
+          <li>Smoking: Denied</li>
+          <li>Betel nut: Denied</li>
+         </ul>
+        </div>
+        <div>
+         <p class="text-cyan-400 font-medium mb-2">Family History:</p>
+         <p>No known history of diabetes, hypertension, hyperlipidemia, cardiovascular disease, or cancer among blood relatives.</p>
+        </div>
+       </div>
+      </details>
+      <!-- Cloud Drug Profile -->
+      <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">💊</span> <span class="text-white font-medium">Cloud Drug Profile (雲端藥歷)</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></summary>
+       <div class="px-4 pb-4 space-y-3 text-sm text-zinc-200">
+        <p class="text-zinc-400 text-xs">Medication record source: Outside hospital / Cloud medication record. Dates are shown in ROC calendar format as provided.</p>
+        <div class="overflow-x-auto">
+         <table class="w-full text-zinc-200 text-xs border-collapse">
+          <thead>
+           <tr class="bg-slate-800/70">
+            <th class="text-left p-2 border border-slate-600">Source</th>
+            <th class="text-left p-2 border border-slate-600">Ingredients</th>
+            <th class="text-left p-2 border border-slate-600">Brand name</th>
+            <th class="text-center p-2 border border-slate-600">Frequency</th>
+            <th class="text-center p-2 border border-slate-600">Start date</th>
+            <th class="text-center p-2 border border-slate-600">End date</th>
+            <th class="text-center p-2 border border-slate-600">Total quantity</th>
+            <th class="text-center p-2 border border-slate-600">Medication days</th>
+           </tr>
+          </thead>
+          <tbody>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Acyclovir</td><td class="p-2 border border-slate-600">Acylete Tablets 400 mg (Acyclovir)</td><td class="text-center p-2 border border-slate-600">PID</td><td class="text-center p-2 border border-slate-600">111/03/18</td><td class="text-center p-2 border border-slate-600">111/03/20</td><td class="text-center p-2 border border-slate-600">30</td><td class="text-center p-2 border border-slate-600">3</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Cilostazol</td><td class="p-2 border border-slate-600">Pletaal 50 mg/tab</td><td class="text-center p-2 border border-slate-600">BID</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">56</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Clonazepam</td><td class="p-2 border border-slate-600">Rivotril 0.5 mg Tablet</td><td class="text-center p-2 border border-slate-600">QD</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">28</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Clopidogrel</td><td class="p-2 border border-slate-600">Plavix Film-Coated Tablets 75 mg</td><td class="text-center p-2 border border-slate-600">QD</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">28</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Lercanidipine</td><td class="p-2 border border-slate-600">Zanidip F.C tab. 10 mg</td><td class="text-center p-2 border border-slate-600">BID</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">56</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Bisoprolol</td><td class="p-2 border border-slate-600">Concor 1.25 mg</td><td class="text-center p-2 border border-slate-600">QD</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">28</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Agomelatine</td><td class="p-2 border border-slate-600">Valdoxan F.C tab 25 mg</td><td class="text-center p-2 border border-slate-600">HS</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">28</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Insulin Aspart</td><td class="p-2 border border-slate-600">Novorapid Flexpen</td><td class="text-center p-2 border border-slate-600">TID</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">6</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Insulin Glargine</td><td class="p-2 border border-slate-600">Toujeo 300 units</td><td class="text-center p-2 border border-slate-600">ASORDER</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">2</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+           <tr><td class="p-2 border border-slate-600">Other hospital</td><td class="p-2 border border-slate-600">Darbepoetin alfa</td><td class="p-2 border border-slate-600">Nesp injection plastic syringe</td><td class="text-center p-2 border border-slate-600">QW</td><td class="text-center p-2 border border-slate-600">111/03/08</td><td class="text-center p-2 border border-slate-600">111/04/05</td><td class="text-center p-2 border border-slate-600">4</td><td class="text-center p-2 border border-slate-600">28</td></tr>
+          </tbody>
+         </table>
+        </div>
+       </div>
+      
+</details>
+      <!-- NICU Medication Records -->
+      <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">💉</span> <span class="text-white font-medium">NICU Medication Records</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></summary>
+       <div class="px-4 pb-4 space-y-5 text-sm text-zinc-200">
+        <div>
+         <p class="text-cyan-400 font-medium mb-2">NICU 3/22 Current Medications</p>
+         <div class="overflow-x-auto">
+          <table class="w-full text-zinc-200 text-xs border-collapse">
+           <thead>
+            <tr class="bg-slate-800/70">
+             <th class="text-left p-2 border border-slate-600">Medication</th>
+             <th class="text-center p-2 border border-slate-600">Dose / Quantity</th>
+             <th class="text-center p-2 border border-slate-600">Frequency</th>
+             <th class="text-left p-2 border border-slate-600">Notes</th>
+            </tr>
+           </thead>
+           <tbody>
+            <tr><td class="p-2 border border-slate-600">Acetaminophen 500 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">IRRE</td><td class="p-2 border border-slate-600">Q6H PRN if fever &gt;38°C</td></tr>
+            <tr><td class="p-2 border border-slate-600">Acyclovir sodium 250 mg/vial</td><td class="text-center p-2 border border-slate-600">2 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600">IV; rinse tube after administration if extravasation occurs</td></tr>
+            <tr><td class="p-2 border border-slate-600">Bisoprolol hemifumarate 1.25 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Darbepoetin alfa 20 mcg/0.5 mL/syringe</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QW</td><td class="p-2 border border-slate-600">W2</td></tr>
+            <tr><td class="p-2 border border-slate-600">Clopidogrel 75 mg/tab (Plavix Sanofi)</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Cilostazol 50 mg/tab (Pletaal Otsuka)</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">BID</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Exforge 5/160 tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">BID</td><td class="p-2 border border-slate-600">Amlodipine 5 mg + Valsartan 160 mg</td></tr>
+            <tr><td class="p-2 border border-slate-600">Insulin glargine (Toujeo SoloStar) 300 U/mL, 1.5 mL/pen</td><td class="text-center p-2 border border-slate-600">12 UN</td><td class="text-center p-2 border border-slate-600">HS</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Insulin aspart (NovoRapid FlexPen) 100 U/mL, 3 mL/pen</td><td class="text-center p-2 border border-slate-600">12 UN</td><td class="text-center p-2 border border-slate-600">TID</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Levetiracetam 100 mg/mL, 5 mL/vial (Keppra GSK)</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">Q12H</td><td class="p-2 border border-slate-600"></td></tr>
+           </tbody>
+          </table>
+         </div>
+        </div>
+        <div>
+         <p class="text-cyan-400 font-medium mb-2">NICU 3/24 Current Medications</p>
+         <div class="overflow-x-auto">
+          <table class="w-full text-zinc-200 text-xs border-collapse">
+           <thead>
+            <tr class="bg-slate-800/70">
+             <th class="text-left p-2 border border-slate-600">Medication</th>
+             <th class="text-center p-2 border border-slate-600">Dose / Quantity</th>
+             <th class="text-center p-2 border border-slate-600">Frequency</th>
+             <th class="text-left p-2 border border-slate-600">Notes</th>
+            </tr>
+           </thead>
+           <tbody>
+            <tr><td class="p-2 border border-slate-600">Acetaminophen 500 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">IRRE</td><td class="p-2 border border-slate-600">Q6H PRN if fever &gt;38°C</td></tr>
+            <tr><td class="p-2 border border-slate-600">Bisoprolol hemifumarate 1.25 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Clopidogrel 75 mg/tab (Plavix Sanofi)</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Cilostazol 50 mg/tab (Pletaal Otsuka)</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">BID</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Azilsartan medoxomil 40 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Regular insulin (Actrapid) 100 IU/mL</td><td class="text-center p-2 border border-slate-600">4 UN</td><td class="text-center p-2 border border-slate-600">IRRE</td><td class="p-2 border border-slate-600">Sliding scale PRN: FS &gt;250: 4 U; &gt;300: 6 U; &gt;350: 8 U; &gt;400: 10 U</td></tr>
+            <tr><td class="p-2 border border-slate-600">Insulin glargine (Toujeo SoloStar) 300 U/mL, 1.5 mL/pen</td><td class="text-center p-2 border border-slate-600">12 UN</td><td class="text-center p-2 border border-slate-600">HS</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Darbepoetin alfa 20 mcg/0.5 mL/syringe</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QW</td><td class="p-2 border border-slate-600">W2; after H/D</td></tr>
+            <tr><td class="p-2 border border-slate-600">NiCARDipine HCl 1 mg/mL, 10 mg/10 mL/amp</td><td class="text-center p-2 border border-slate-600">2 mL</td><td class="text-center p-2 border border-slate-600">IRRE</td><td class="p-2 border border-slate-600">PRN Q1H for SBP &gt;180 mmHg</td></tr>
+            <tr><td class="p-2 border border-slate-600">Valsartan 160 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Nifedipine SR F.C 30 mg/tab</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Levetiracetam oral solution 100 mg/mL, 300 mL/bot</td><td class="text-center p-2 border border-slate-600">5 mL</td><td class="text-center p-2 border border-slate-600">Q12H</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Insulin aspart (NovoRapid FlexPen) 100 U/mL, 3 mL/pen</td><td class="text-center p-2 border border-slate-600">8 UN</td><td class="text-center p-2 border border-slate-600">TID</td><td class="p-2 border border-slate-600"></td></tr>
+            <tr><td class="p-2 border border-slate-600">Acyclovir sodium 250 mg/vial</td><td class="text-center p-2 border border-slate-600">1 PC</td><td class="text-center p-2 border border-slate-600">QD</td><td class="p-2 border border-slate-600">IV; rinse tube after administration if extravasation occurs</td></tr>
+           </tbody>
+          </table>
+         </div>
+        </div>
+       </div>
+      </details>
+      
+      <!-- TPR / Blood Pressure Monitoring -->
+      <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">📈</span> <span class="text-white font-medium">TPR / Blood Pressure Monitoring</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></summary>
+       <div class="px-4 pb-4 space-y-3 text-sm text-zinc-200">
+        <p class="text-zinc-400 text-xs">Blood pressure and heart rate monitoring from 3/23 to 3/24.</p>
+        <div class="overflow-x-auto">
+         <table class="w-full text-zinc-200 text-xs border-collapse">
+          <thead>
+           <tr class="bg-slate-800/70">
+            <th class="text-center p-2 border border-slate-600">3/23 Time</th>
+            <th class="text-center p-2 border border-slate-600">SBP/DBP</th>
+            <th class="text-center p-2 border border-slate-600">HR</th>
+            <th class="text-center p-2 border border-slate-600">3/23 Time</th>
+            <th class="text-center p-2 border border-slate-600">SBP/DBP</th>
+            <th class="text-center p-2 border border-slate-600">HR</th>
+            <th class="text-center p-2 border border-slate-600">3/24 Time</th>
+            <th class="text-center p-2 border border-slate-600">SBP/DBP</th>
+            <th class="text-center p-2 border border-slate-600">HR</th>
+           </tr>
+          </thead>
+          <tbody>
+           <tr><td class="text-center p-2 border border-slate-600">23:51</td><td class="text-center p-2 border border-slate-600">172/69</td><td class="text-center p-2 border border-slate-600">95</td><td class="text-center p-2 border border-slate-600">06:00</td><td class="text-center p-2 border border-slate-600">135/57</td><td class="text-center p-2 border border-slate-600">91</td><td class="text-center p-2 border border-slate-600">09:00</td><td class="text-center p-2 border border-slate-600">164/64</td><td class="text-center p-2 border border-slate-600">84</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">23:00</td><td class="text-center p-2 border border-slate-600">169/75</td><td class="text-center p-2 border border-slate-600">97</td><td class="text-center p-2 border border-slate-600">05:00</td><td class="text-center p-2 border border-slate-600">160/73</td><td class="text-center p-2 border border-slate-600">91</td><td class="text-center p-2 border border-slate-600">08:00</td><td class="text-center p-2 border border-slate-600">153/63</td><td class="text-center p-2 border border-slate-600">94</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">22:00</td><td class="text-center p-2 border border-slate-600">167/70</td><td class="text-center p-2 border border-slate-600">93</td><td class="text-center p-2 border border-slate-600">04:00</td><td class="text-center p-2 border border-slate-600">135/98</td><td class="text-center p-2 border border-slate-600">95</td><td class="text-center p-2 border border-slate-600">07:00</td><td class="text-center p-2 border border-slate-600">183/69</td><td class="text-center p-2 border border-slate-600">95</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">21:00</td><td class="text-center p-2 border border-slate-600">162/120</td><td class="text-center p-2 border border-slate-600">96</td><td class="text-center p-2 border border-slate-600">03:00</td><td class="text-center p-2 border border-slate-600">114/54</td><td class="text-center p-2 border border-slate-600">87</td><td class="text-center p-2 border border-slate-600">06:00</td><td class="text-center p-2 border border-slate-600">152/60</td><td class="text-center p-2 border border-slate-600">96</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">20:00</td><td class="text-center p-2 border border-slate-600">164/59</td><td class="text-center p-2 border border-slate-600">94</td><td class="text-center p-2 border border-slate-600">02:00</td><td class="text-center p-2 border border-slate-600">169/80</td><td class="text-center p-2 border border-slate-600">98</td><td class="text-center p-2 border border-slate-600">05:00</td><td class="text-center p-2 border border-slate-600">194/72</td><td class="text-center p-2 border border-slate-600">93</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">19:00</td><td class="text-center p-2 border border-slate-600">156/82</td><td class="text-center p-2 border border-slate-600">96</td><td class="text-center p-2 border border-slate-600">01:00</td><td class="text-center p-2 border border-slate-600">136/60</td><td class="text-center p-2 border border-slate-600">99</td><td class="text-center p-2 border border-slate-600">04:00</td><td class="text-center p-2 border border-slate-600">181/79</td><td class="text-center p-2 border border-slate-600">91</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">18:00</td><td class="text-center p-2 border border-slate-600">141/58</td><td class="text-center p-2 border border-slate-600">89</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">03:00</td><td class="text-center p-2 border border-slate-600">192/70</td><td class="text-center p-2 border border-slate-600">93</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">17:00</td><td class="text-center p-2 border border-slate-600">160/60</td><td class="text-center p-2 border border-slate-600">95</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">02:00</td><td class="text-center p-2 border border-slate-600">180/61</td><td class="text-center p-2 border border-slate-600">98</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">16:00</td><td class="text-center p-2 border border-slate-600">145/103</td><td class="text-center p-2 border border-slate-600">88</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">01:00</td><td class="text-center p-2 border border-slate-600">178/79</td><td class="text-center p-2 border border-slate-600">96</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">15:00</td><td class="text-center p-2 border border-slate-600">153/59</td><td class="text-center p-2 border border-slate-600">87</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">14:00</td><td class="text-center p-2 border border-slate-600">141/65</td><td class="text-center p-2 border border-slate-600">86</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">13:00</td><td class="text-center p-2 border border-slate-600">140/57</td><td class="text-center p-2 border border-slate-600">87</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">12:00</td><td class="text-center p-2 border border-slate-600">167/73</td><td class="text-center p-2 border border-slate-600">85</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">11:00</td><td class="text-center p-2 border border-slate-600">158/72</td><td class="text-center p-2 border border-slate-600">92</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">10:00</td><td class="text-center p-2 border border-slate-600">200/70</td><td class="text-center p-2 border border-slate-600">84</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">09:00</td><td class="text-center p-2 border border-slate-600">196/79</td><td class="text-center p-2 border border-slate-600">60</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">08:00</td><td class="text-center p-2 border border-slate-600">149/62</td><td class="text-center p-2 border border-slate-600">95</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+<tr><td class="text-center p-2 border border-slate-600">07:00</td><td class="text-center p-2 border border-slate-600">162/99</td><td class="text-center p-2 border border-slate-600">95</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+          </tbody>
+         </table>
+        </div>
+       </div>
+      </details>
+<details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+        <div class="flex items-center gap-2"><span class="text-2xl">❤️</span> <span class="text-white font-medium">Vital Signs</span>
+         </div>
+         <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></summary>
+        <div class="px-4 pb-4">
+         <p class="text-zinc-400 text-xs mb-2">3/22 Physical Examination</p>
+         <div class="grid grid-cols-2 gap-2">
+          <div class="bg-slate-800/70 rounded-lg p-3 text-center">
+           <p class="text-zinc-400 text-xs">Temperature</p>
+           <p class="text-emerald-400 font-bold vitals-display">36.6</p>
+           <p class="text-slate-500 text-xs">°C</p>
+          </div>
+          <div class="bg-slate-800/70 rounded-lg p-3 text-center">
+           <p class="text-zinc-400 text-xs">Pulse</p>
+           <p class="text-yellow-400 font-bold vitals-display">100</p>
+           <p class="text-slate-500 text-xs">/min</p>
+          </div>
+          <div class="bg-slate-800/70 rounded-lg p-3 text-center">
+           <p class="text-zinc-400 text-xs">Respiratory Rate</p>
+           <p class="text-yellow-400 font-bold vitals-display">23</p>
+           <p class="text-slate-500 text-xs">/min</p>
+          </div>
+          <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-3 text-center">
+           <p class="text-zinc-400 text-xs">BR / BP</p>
+           <p class="text-red-300 font-bold vitals-display">169/100</p>
+           <p class="text-slate-500 text-xs">mmHg</p>
+          </div>
+         </div>
+        </div>
+       </details><!-- Physical Examination & Vitals -->
+<details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+         <div class="flex items-center gap-2"><span class="text-2xl">🏥</span> <span class="text-white font-medium">3/22 Physical Examination</span>
+         </div>
+         <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></summary>
+        <div class="px-4 pb-4 space-y-4 text-sm">
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">Anthropometrics:</p>
+          <div class="grid grid-cols-2 gap-2">
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Height</p><p class="text-zinc-200 font-bold">170.5 cm</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Weight</p><p class="text-zinc-200 font-bold">60.5 kg</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">Vital Signs:</p>
+          <div class="grid grid-cols-2 gap-2">
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Temperature</p><p class="text-emerald-400 font-bold">36.6°C</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Pulse</p><p class="text-yellow-400 font-bold">100/min</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Respiratory Rate</p><p class="text-yellow-400 font-bold">23/min</p></div>
+           <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-2"><p class="text-zinc-400 text-xs">BR / BP</p><p class="text-red-300 font-bold">169/100 mmHg</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">General / System Examination:</p>
+          <div class="space-y-2">
+           <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-2"><p class="text-zinc-200"><span class="text-yellow-400 font-medium">Neck:</span> Neck stiffness +, &gt;4 fb</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Chest:</span> Bilateral symmetric expansion, no crackles, no wheezing</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Abdomen:</span> Soft, no tenderness</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Extremities:</span> No pitting edema</p></div>
+           <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-2"><p class="text-zinc-200"><span class="text-red-300 font-medium">Skin:</span> Skin rash in right side chest wall and back around T2-3 dermatome; erythema in face</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">Neurological Examination:</p>
+          <div class="space-y-2">
+           <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-2"><p class="text-zinc-200"><span class="text-yellow-400 font-medium">Consciousness:</span> E3-4V1-2M4; sometimes nods to his name and M6 with finger counting; dull response; intermittent jerky movement in four limbs</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Pupils / Light Reflex:</span> Pupil 2.5/2.5, LR +/+</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">EOM:</span> Free horizontal roving</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Doll eye:</span> Preserved / preserved</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Corneal reflex:</span> +/+</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Face / Nystagmus:</span> No facial asymmetry; nystagmus nil</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Speech:</span> No verbal output</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Motor Power:</span> MP: all &gt;3</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-200"><span class="text-zinc-400 font-medium">Babinski sign:</span> Bilateral no response</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">Supportive Devices / Airway:</p>
+          <div class="space-y-1">
+           <p class="text-emerald-300">✓ NG tube: Present</p>
+           <p class="text-emerald-300">✓ Cough function: Preserved</p>
+          </div>
+         </div>
+        </div>
+       </details>
+
+       <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+         <div class="flex items-center gap-2"><span class="text-2xl">📝</span> <span class="text-white font-medium">3/24 Progress Note</span>
+         </div>
+         <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></summary>
+        <div class="px-4 pb-4 space-y-4 text-sm text-zinc-200">
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">S: Subjective</p>
+          <div class="space-y-2">
+           <div class="bg-slate-800/70 rounded-lg p-2"><p>Intermittent four-limb slow flexion was observed.</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p>Scaling lesion on face.</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">O: Objective</p>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Temperature</p><p class="text-emerald-400 font-bold">36.4°C</p><p class="text-slate-500 text-xs">2022/03/23 21:00</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Pulse</p><p class="text-yellow-400 font-bold">95/min</p><p class="text-slate-500 text-xs">2022/03/23 23:51</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p class="text-zinc-400 text-xs">Respiratory Rate</p><p class="text-emerald-400 font-bold">20/min</p><p class="text-slate-500 text-xs">2022/03/23 23:51</p></div>
+           <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-2"><p class="text-zinc-400 text-xs">Blood Pressure</p><p class="text-red-300 font-bold">172/69 mmHg</p><p class="text-slate-500 text-xs">2022/03/23 23:51</p></div>
+          </div>
+          <div class="space-y-2">
+           <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-2"><p><span class="text-yellow-400 font-medium">Neck:</span> Neck stiffness +</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Chest:</span> Bilateral symmetric expansion, no crackles, no wheezing</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Abdomen:</span> Soft, no tenderness</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Extremities:</span> No pitting edema</p></div>
+           <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-2"><p><span class="text-red-300 font-medium">Skin:</span> Skin rash in right side chest wall and back around T2-3 dermatome</p></div>
+           <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-2"><p><span class="text-yellow-400 font-medium">Consciousness:</span> E1V1M4</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Pupils / Light Reflex:</span> Pupil 2/2, LR +/+</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Doll eye:</span> Preserved / preserved</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Corneal reflex:</span> +/+</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Face / Nystagmus:</span> No facial asymmetry; nystagmus nil</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Speech:</span> No verbal output</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Supportive device:</span> NG tube +</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Suction reflex:</span> Preserved</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Motor Power:</span> MP: 3 / 3 / 3 / 3</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p><span class="text-zinc-400 font-medium">Babinski sign:</span> Bilateral no response</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">A: Assessment</p>
+          <div class="space-y-2">
+           <div class="bg-red-900/30 border border-red-700/50 rounded-lg p-2"><p><span class="text-red-300 font-medium">Meningoencephalitis:</span> Favor non-bacterial origin; suspect herpes zoster infection.</p><p class="text-zinc-400 text-xs mt-1">Acyclovir IVD 3/20–</p></div>
+           <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-2"><p><span class="text-yellow-400 font-medium">Seizure:</span> Related to CNS infection or toxic encephalopathy (acyclovir overdose).</p><p class="text-zinc-400 text-xs mt-1">Keppra 1000 mg/day; Depakine 1600 mg/day</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p>Herpes zoster at right T2-3 dermatome.</p></div>
+           <div class="bg-slate-800/70 rounded-lg p-2"><p>Bilateral pleural effusion (R &gt; L), cause?</p></div>
+          </div>
+         </div>
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">P: Plan</p>
+          <ul class="list-disc list-inside space-y-1">
+           <li>Acyclovir IVD 3/20–</li>
+           <li>Pending EEG report</li>
+           <li>Brain MRI scheduled on 3/25 at 23:00</li>
+           <li>Observation</li>
+          </ul>
+         </div>
+        </div>
+       </details>
+       <details class="bg-slate-800 rounded-xl border border-slate-600 group"><summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+         <div class="flex items-center gap-2"><span class="text-2xl">🔬</span> <span class="text-white font-medium">Laboratory Findings / Lab Data</span>
+         </div>
+         <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></summary>
+        <div class="px-4 pb-4 space-y-5 text-sm text-zinc-200">
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">1. Hematology</p>
+          <div class="overflow-x-auto">
+           <table class="w-full text-zinc-200 text-xs border-collapse">
+            <thead>
+             <tr class="bg-slate-800/70">
+              <th class="text-left p-2 border border-slate-600">Test</th>
+              <th class="text-center p-2 border border-slate-600">3/24</th>
+              <th class="text-center p-2 border border-slate-600">3/21</th>
+              <th class="text-center p-2 border border-slate-600">3/20</th>
+             </tr>
+            </thead>
+            <tbody>
+             <tr><td class="p-2 border border-slate-600">WBC (10^3/µL)</td><td class="text-center p-2 border border-slate-600">9.6</td><td class="text-center p-2 border border-slate-600">7.6</td><td class="text-center p-2 border border-slate-600">4.7</td></tr>
+             <tr><td class="p-2 border border-slate-600">RBC (million/µL)</td><td class="text-center p-2 border border-slate-600">3.33</td><td class="text-center p-2 border border-slate-600">3.37</td><td class="text-center p-2 border border-slate-600">3.01</td></tr>
+             <tr><td class="p-2 border border-slate-600">Hb (g/dL)</td><td class="text-center p-2 border border-slate-600">9.0</td><td class="text-center p-2 border border-slate-600">9.2</td><td class="text-center p-2 border border-slate-600">8.2</td></tr>
+             <tr><td class="p-2 border border-slate-600">Hct (%)</td><td class="text-center p-2 border border-slate-600">26.8</td><td class="text-center p-2 border border-slate-600">27.9</td><td class="text-center p-2 border border-slate-600">24.9</td></tr>
+             <tr><td class="p-2 border border-slate-600">PLT (10^3/µL)</td><td class="text-center p-2 border border-slate-600">206</td><td class="text-center p-2 border border-slate-600">192</td><td class="text-center p-2 border border-slate-600">164</td></tr>
+             <tr><td class="p-2 border border-slate-600">Segment (%)</td><td class="text-center p-2 border border-slate-600">79.2</td><td class="text-center p-2 border border-slate-600">79.6</td><td class="text-center p-2 border border-slate-600">69.7</td></tr>
+             <tr><td class="p-2 border border-slate-600">Lymphocyte (%)</td><td class="text-center p-2 border border-slate-600">11.7</td><td class="text-center p-2 border border-slate-600">14.3</td><td class="text-center p-2 border border-slate-600">19.5</td></tr>
+             <tr><td class="p-2 border border-slate-600">Monocyte (%)</td><td class="text-center p-2 border border-slate-600">7.2</td><td class="text-center p-2 border border-slate-600">5.3</td><td class="text-center p-2 border border-slate-600">6.8</td></tr>
+             <tr><td class="p-2 border border-slate-600">Eosinophil (%)</td><td class="text-center p-2 border border-slate-600">1.8</td><td class="text-center p-2 border border-slate-600">0.7</td><td class="text-center p-2 border border-slate-600">3.4</td></tr>
+             <tr><td class="p-2 border border-slate-600">Basophil (%)</td><td class="text-center p-2 border border-slate-600">0.1</td><td class="text-center p-2 border border-slate-600">0.1</td><td class="text-center p-2 border border-slate-600">0.6</td></tr>
+            </tbody>
+           </table>
+          </div>
+         </div>
+
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">2. Biochemistry</p>
+          <div class="overflow-x-auto">
+           <table class="w-full text-zinc-200 text-xs border-collapse">
+            <thead>
+             <tr class="bg-slate-800/70"><th class="text-left p-2 border border-slate-600">Test</th><th class="text-center p-2 border border-slate-600">3/21</th><th class="text-center p-2 border border-slate-600">3/20</th></tr>
+            </thead>
+            <tbody>
+             <tr><td class="p-2 border border-slate-600">T-cholesterol (mg/dL)</td><td class="text-center p-2 border border-slate-600">182</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Triglyceride (mg/dL)</td><td class="text-center p-2 border border-slate-600">124</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">HbA1c (%)</td><td class="text-center p-2 border border-slate-600">9.7</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Uric acid</td><td class="text-center p-2 border border-slate-600">6.8</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">BUN (mg/dL)</td><td class="text-center p-2 border border-slate-600">56</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Creatinine (mg/dL)</td><td class="text-center p-2 border border-slate-600">8.87</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Estimated GFR (mL/min/1.73m²)</td><td class="text-center p-2 border border-slate-600">6</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">AST/ALT (U/L)</td><td class="text-center p-2 border border-slate-600">11/7</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Calcium (mg/dL)</td><td class="text-center p-2 border border-slate-600">–</td><td class="text-center p-2 border border-slate-600">8.9</td></tr>
+             <tr><td class="p-2 border border-slate-600">Phosphate (mg/dL)</td><td class="text-center p-2 border border-slate-600">5.2</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Na (mEq/L)</td><td class="text-center p-2 border border-slate-600">135</td><td class="text-center p-2 border border-slate-600">137</td></tr>
+             <tr><td class="p-2 border border-slate-600">K (mEq/L)</td><td class="text-center p-2 border border-slate-600">5.1</td><td class="text-center p-2 border border-slate-600">4.5</td></tr>
+             <tr><td class="p-2 border border-slate-600">Ammonia (µg/dL)</td><td class="text-center p-2 border border-slate-600">39</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">Albumin (g/dL)</td><td class="text-center p-2 border border-slate-600">3.97</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+             <tr><td class="p-2 border border-slate-600">CRP (mg/L)</td><td class="text-center p-2 border border-slate-600">39</td><td class="text-center p-2 border border-slate-600">–</td></tr>
+            </tbody>
+           </table>
+          </div>
+         </div>
+
+         <div>
+          <p class="text-cyan-400 font-medium mb-2">3. Cerebrospinal Fluid (CSF), 3/22</p>
+          <div class="overflow-x-auto">
+           <table class="w-full text-zinc-200 text-xs border-collapse">
+            <thead>
+             <tr class="bg-slate-800/70"><th class="text-left p-2 border border-slate-600">Test</th><th class="text-center p-2 border border-slate-600">Result</th></tr>
+            </thead>
+            <tbody>
+             <tr><td class="p-2 border border-slate-600">pH</td><td class="text-center p-2 border border-slate-600">7.9</td></tr>
+             <tr><td class="p-2 border border-slate-600">Appearance</td><td class="text-center p-2 border border-slate-600">Clear</td></tr>
+             <tr><td class="p-2 border border-slate-600">Color</td><td class="text-center p-2 border border-slate-600">Colorless</td></tr>
+             <tr><td class="p-2 border border-slate-600">Protein</td><td class="text-center p-2 border border-slate-600">78.6</td></tr>
+             <tr><td class="p-2 border border-slate-600">WBC</td><td class="text-center p-2 border border-slate-600">31</td></tr>
+             <tr><td class="p-2 border border-slate-600">RBC</td><td class="text-center p-2 border border-slate-600">0</td></tr>
+             <tr><td class="p-2 border border-slate-600">Neutrophil</td><td class="text-center p-2 border border-slate-600">1</td></tr>
+             <tr><td class="p-2 border border-slate-600">Lymphocyte</td><td class="text-center p-2 border border-slate-600">63</td></tr>
+             <tr><td class="p-2 border border-slate-600">Monocyte</td><td class="text-center p-2 border border-slate-600">36</td></tr>
+             <tr><td class="p-2 border border-slate-600">Sugar (C/B)</td><td class="text-center p-2 border border-slate-600">141/185</td></tr>
+             <tr><td class="p-2 border border-slate-600">Lactate</td><td class="text-center p-2 border border-slate-600">19</td></tr>
+             <tr><td class="p-2 border border-slate-600">Gram stain</td><td class="text-center p-2 border border-slate-600">No bacteria seen</td></tr>
+             <tr><td class="p-2 border border-slate-600">Acid-fast bacilli</td><td class="text-center p-2 border border-slate-600">Negative</td></tr>
+             <tr><td class="p-2 border border-slate-600">India ink</td><td class="text-center p-2 border border-slate-600">Negative</td></tr>
+             <tr><td class="p-2 border border-slate-600">TB PCR</td><td class="text-center p-2 border border-slate-600">Pending</td></tr>
+            </tbody>
+           </table>
+          </div>
+          <div class="bg-slate-800/70 rounded-lg p-3 text-xs text-zinc-400 mt-3">
+           <p>CSF summary: WBC 31; N/L/M 1/63/36; TP 78.6; Sugar (C/B) 141/185; lactate 19; India ink negative; TB PCR pending.</p>
+          </div>
+         </div>
+        </div>
+       </details>
+      </details>
+     </div>
+    </aside><!-- Center - Hospital Room Scene -->
+    <div class="flex-1 flex flex-col xl:flex-row gap-4 min-h-0">
+    <section class="flex-1 flex flex-col min-h-0"><!-- Scene -->
+     <div class="bg-gradient-to-b from-slate-700 to-slate-800 rounded-2xl flex-1 relative overflow-hidden border border-slate-600 min-h-[300px]"><!-- Room Background Elements -->
+      <div class="absolute inset-0"><!-- Window -->
+       <div class="absolute top-4 left-4 w-32 h-24 bg-gradient-to-b from-sky-300 to-sky-400 rounded-lg border-4 border-slate-500 opacity-60"></div><!-- IV Stand -->
+       <div class="absolute top-8 right-1/4 flex flex-col items-center">
+        <div class="w-1 h-24 bg-slate-400"></div>
+        <div class="w-8 h-12 bg-slate-300 rounded-b-lg relative">
+         <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-yellow-200 rounded-full border-2 border-slate-400"></div>
+        </div>
+        <div class="w-px h-16 bg-blue-300 opacity-50"></div>
+       </div>
+      </div><!-- Patient Bed -->
+      <div class="absolute bottom-12 left-1/2 -translate-x-1/2 w-64"><!-- Bed Frame -->
+       <div class="bg-slate-500 h-4 rounded-t-lg"></div>
+       <div class="bg-white h-20 rounded-lg relative"><!-- Pillow -->
+        <div class="absolute top-2 left-2 w-16 h-12 bg-slate-100 rounded-lg shadow-inner"></div><!-- Patient -->
+        <div class="absolute top-1 left-4 text-4xl">
+         😴
+        </div><!-- Blanket -->
+        <div class="absolute bottom-0 right-0 w-48 h-14 bg-gradient-to-r from-teal-200 to-teal-300 rounded-br-lg rounded-tl-3xl"></div>
+       </div><!-- Bed Legs -->
+       <div class="flex justify-between px-4">
+        <div class="w-3 h-6 bg-slate-600 rounded-b"></div>
+        <div class="w-3 h-6 bg-slate-600 rounded-b"></div>
+       </div>
+      </div><!-- Monitor --> <!-- Characters - Interactive -->
+      <div class="absolute bottom-8 left-8 flex items-end gap-5">
+       <div class="character-hover cursor-pointer" id="doctor-char" onclick="startDialogue('doctor')">
+        <div class="flex flex-col items-center">
+         <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-3xl shadow-lg border-4 border-white pulse-gentle">
+          👨‍⚕️
+         </div>
+         <span class="mt-2 bg-blue-700 text-white text-xs px-3 py-1 rounded-full font-medium shadow">Physician</span>
+         <span class="text-blue-100 text-xs mt-1">Click to talk</span>
+        </div>
+       </div>
+       <div class="character-hover" id="pharmacist-char">
+        <div class="flex flex-col items-center">
+         <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-cyan-600 rounded-full flex items-center justify-center text-3xl shadow-lg border-4 border-yellow-300">
+          👩‍⚕️
+         </div>
+         <span class="mt-2 bg-emerald-700 text-white text-xs px-3 py-1 rounded-full font-medium shadow">You (Pharmacist)</span>
+        </div>
+       </div>
+      </div>
+     </div>
+
+<!-- Dialogue Box -->
+     <div id="dialogue-box" class="mt-4 bg-slate-800 rounded-2xl border border-slate-600 p-5 hidden dialogue-enter"><!-- Speaker -->
+      <div id="speaker-info" class="flex items-center gap-3 mb-4">
+       <div id="speaker-avatar" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl"></div>
+       <div>
+        <p id="speaker-name" class="text-white font-bold"></p>
+        <p id="speaker-role" class="text-zinc-400 text-sm"></p>
+       </div>
+      </div><!-- Question -->
+      <div id="dialogue-question" class="bg-slate-800/70 rounded-xl p-4 mb-4">
+       <p id="question-text" class="text-white leading-relaxed"></p>
+      </div><!-- Answer Options -->
+      <div id="answer-options" class="space-y-3"><!-- Options will be inserted here -->
+      </div><!-- Feedback -->
+      <div id="feedback-box" class="hidden mt-4 rounded-xl p-4">
+       <div class="flex items-start gap-3"><span id="feedback-icon" class="text-2xl"></span>
+        <div>
+         <p id="feedback-title" class="font-bold mb-1"></p>
+         <p id="feedback-text" class="text-sm leading-relaxed"></p>
+        </div>
+       </div><button onclick="continueLearning()" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors"> Continue Learning </button>
+      </div>
+     </div>
+
+    </section>
+    <aside class="xl:w-80 flex-shrink-0">
+     <div class="bg-slate-800 rounded-2xl p-4 border border-slate-600 xl:sticky xl:top-4">
+      <h2 class="text-white text-xl font-bold mb-4">Learning Statistics</h2>
+      <div class="bg-slate-700/40 border border-slate-600 rounded-2xl p-4 mb-4">
+       <p class="text-zinc-400 text-sm">Class</p>
+       <p id="display-class-name" class="text-white font-semibold mt-1">Not set</p>
+       <p class="text-zinc-400 text-sm mt-3">Group name</p>
+       <p id="display-group-name" class="text-white font-semibold mt-1">Not set</p>
+       
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-600">
+        <p class="text-zinc-400 text-sm">Total Submissions</p>
+        <p id="stat-total" class="text-white text-3xl font-bold mt-2">0</p>
+       </div>
+       <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-600">
+        <p class="text-zinc-400 text-sm">Correct Answers</p>
+        <p id="stat-correct" class="text-emerald-300 text-3xl font-bold mt-2">0</p>
+       </div>
+       <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-600">
+        <p class="text-zinc-400 text-sm">Wrong Answers</p>
+        <p id="stat-wrong" class="text-amber-300 text-3xl font-bold mt-2">0</p>
+       </div>
+       <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-600">
+        <p class="text-zinc-400 text-sm">Wrong Records</p>
+        <p id="stat-wrong-records" class="text-red-300 text-3xl font-bold mt-2">0</p>
+<div class="mt-4">
+  <button type="button" onclick="exportCurrentGroupResponses()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-all">📄 export record</button>
+</div>
+       </div>
+      </div>
+      <div class="mt-4 flex flex-col gap-3">
+       
+      </div>
+     </div>
+    </aside>
+    </div>
+   </main>
+  </div>
+  
+
+
+<script>
+const defaultConfig = {
+  patient_name: '66-year-old male with altered consciousness',
+  scenario_title: '藥事照護案例-意識改變與四肢抽搐',
+  background_color: '#0f172a',
+  surface_color: '#1e293b',
+  text_color: '#f1f5f9',
+  primary_action_color: '#2563eb',
+  secondary_action_color: '#0891b2',
+  font_family: 'Noto Sans TC',
+  font_size: 16
+};
+
+let config = { ...defaultConfig };
+let completedDialogues = new Set();
+let currentDialogue = null;
+let currentQuestionIndex = 0;
+let scoreBoard = { totalSubmissions: 0, correctAnswers: 0, wrongAnswers: 0 };
+let wrongQuestionHistory = [];
+let answerHistory = [];
+let studentGroupInfo = { className: '', groupName: '', startedAt: '' };
+let dialogueScenarioComplete = false;
+let quizCompleted = false;
+const STORAGE_KEY = 'pharmacist_simulator_group_records_v1';
+let familyChallengeTimer = null;
+let familyChallengeRemaining = 300;
+let reflectiveQuestionIndex = 0;
+let reflectiveTimer = null;
+let reflectiveRemaining = 0;
+let gameCompleted = false;
+
+const physicianQuestions = [
+  {
+    id: 'Q1',
+    speaker: 'Physician',
+    role: 'Attending Physician',
+    question: 'Hi pharmacist, the patient was admitted this afternoon with a consciousness disturbance. I was wondering if it could be related to a supratherapeutic dosage of his medications?',
+    type: 'mcq',
+    correct: 'B',
+    options: [
+      { key: 'A', text: 'It could be fungal meningitis.' },
+      { key: 'B', text: 'It might be induced by an overdose or excessive drug dosage.' },
+      { key: 'C', text: 'It could simply be a manifestation of natural aging.' },
+      { key: 'D', text: 'It might be delirium triggered by an electrolyte imbalance.' }
+    ]
+  },
+  {
+    id: 'Q2',
+    speaker: 'Physician',
+    role: 'Attending Physician',
+    question: 'I checked his PharmaCloud record and noticed a clinic prescription from a few days ago for Acyclovir 400mg, two tablets five times a day. Since this patient is on dialysis, what would you suggest regarding this prescription?',
+    type: 'mcq',
+    correct: 'A',
+    options: [
+      { key: 'A', text: 'Acyclovir is renally cleared, so a dose reduction is recommended.' },
+      { key: 'B', text: 'Acyclovir is metabolized by the liver. This dose is fine.' },
+      { key: 'C', text: 'This could be a severe viral infection, so a higher dose is necessary to prevent drug resistance.' },
+      { key: 'D', text: 'Since the drug will be cleared by dialysis anyway, the current dosage is not an issue.' }
+    ]
+  },
+  {
+    id: 'Q3',
+    speaker: 'Physician',
+    role: 'Attending Physician',
+    question: 'What is the recommended dosage adjustment for Acyclovir?',
+    type: 'short_answer'
+  }
+];
+const reflectiveQuestions = [
+  {
+    id: 'Q5',
+    question: '你對電梯內醫師與藥師討論2611床病情的想法是什麼？',
+    timeLimit: 120
+  },
+  {
+    id: 'Q6',
+    question: '如果病人家屬揚言醫療疏失提告，身為當事藥師的你會怎麼回覆家屬，採取什麼行動？',
+    timeLimit: null
+  },
+  {
+    id: 'Q7',
+    question: '如果病人家屬揚言醫療疏失提告，假設你是該名藥師的主管，你會怎麼回覆家屬，採取什麼行動？',
+    timeLimit: null
+  },
+  {
+    id: 'Q8',
+    question: '回到神內醫師的病安問題，你會不會通報病安？理由是？',
+    timeLimit: null
+  },
+  {
+    id: 'Q9',
+    question: '如果通報病安，影響到醫師，你的想法是什麼？',
+    timeLimit: null
+  },
+  {
+    id: 'Q10',
+    question: '如果通報病安，影響到原本的調劑藥師同事（可能會被扣績效或扣獎金），你的想法是什麼？',
+    timeLimit: null
+  },
+  {
+    id: 'Q11',
+    question: '如果不通報病安，影響到病人或後續醫療疏失處理流程，你的想法是什麼？',
+    timeLimit: null
+  }
+];
+
+function saveGroupInfo() {
+  const classInput = document.getElementById('class-input');
+  const groupInput = document.getElementById('group-input');
+  const errorEl = document.getElementById('group-form-error');
+
+  const className = classInput ? classInput.value.trim() : '';
+  const groupName = groupInput ? groupInput.value.trim() : '';
+
+  if (!className || !groupName) {
+    if (errorEl) errorEl.classList.remove('hidden');
+    return false;
+  }
+
+  if (errorEl) errorEl.classList.add('hidden');
+
+  studentGroupInfo = {
+    className,
+    groupName,
+    startedAt: studentGroupInfo.startedAt || new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY + '_current_group', JSON.stringify(studentGroupInfo));
+  } catch (e) {
+    console.warn('Unable to save group info:', e);
+  }
+
+  const classDisplay = document.getElementById('display-class-name');
+  const groupDisplay = document.getElementById('display-group-name');
+  if (classDisplay) classDisplay.textContent = className;
+  if (groupDisplay) groupDisplay.textContent = groupName;
+
+  const modal = document.getElementById('group-info-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  return true;
+}
+
+function openGroupModal() {
+  const modal = document.getElementById('group-info-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+  }
+}
+
+function setSpeakerUI(icon = '👨‍⚕️', name = 'Physician', role = 'Attending Physician') {
+  const speakerAvatar = document.getElementById('speaker-avatar');
+  const speakerName = document.getElementById('speaker-name');
+  const speakerRole = document.getElementById('speaker-role');
+
+  if (speakerAvatar) {
+    speakerAvatar.textContent = icon;
+    speakerAvatar.className = 'w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br from-blue-400 to-blue-600';
+  }
+  if (speakerName) speakerName.textContent = name;
+  if (speakerRole) speakerRole.textContent = role;
+}
+
+function startDialogue(role) {
+  if (role !== 'doctor') return;
+
+  currentQuestionIndex = 0;
+  reflectiveQuestionIndex = 0;
+  currentDialogue = 'doctor';
+  dialogueScenarioComplete = false;
+  gameCompleted = false;
+  completedDialogues = new Set();
+  scoreBoard = { totalSubmissions: 0, correctAnswers: 0, wrongAnswers: 0 };
+  wrongQuestionHistory = [];
+  answerHistory = [];
+  updateStats();
+  updateProgress();
+
+  const instruction = document.getElementById('instruction-overlay');
+  const dialogueBox = document.getElementById('dialogue-box');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (instruction) instruction.classList.add('hidden');
+  if (dialogueBox) dialogueBox.classList.remove('hidden');
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  setSpeakerUI();
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = physicianQuestions[currentQuestionIndex];
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (!q || !questionText || !answerOptions) return;
+
+  setSpeakerUI();
+  questionText.textContent = q.question;
+  answerOptions.innerHTML = '';
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  if (q.type === 'mcq') {
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn w-full text-left bg-slate-700/70 hover:bg-blue-700/70 text-zinc-100 border border-slate-600 hover:border-blue-400 rounded-xl px-4 py-3 transition-all';
+      btn.innerHTML = `<span class="font-bold text-blue-300">${opt.key}.</span> ${opt.text}`;
+      btn.onclick = () => handleMCQAnswer(q, opt);
+      answerOptions.appendChild(btn);
+    });
+  } else if (q.type === 'short_answer') {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'space-y-3';
+    wrapper.innerHTML = `
+      <label for="short-answer-input" class="block text-blue-200 font-medium">Your answer:</label>
+      <textarea id="short-answer-input" rows="4" class="w-full rounded-xl border border-slate-600 bg-slate-900 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Type your recommended dosage adjustment here..."></textarea>
+      <button type="button" onclick="submitShortAnswer()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors">Submit Answer</button>
+    `;
+    answerOptions.appendChild(wrapper);
+  }
+
+  updateProgress();
+}
+
+function handleMCQAnswer(q, opt) {
+  const isCorrect = opt.key === q.correct;
+  const now = new Date().toISOString();
+
+  scoreBoard.totalSubmissions += 1;
+
+  answerHistory.push({
+    className: studentGroupInfo.className || '',
+    groupName: studentGroupInfo.groupName || '',
+    submittedAt: now,
+    questionId: q.id,
+    question: q.question,
+    selectedAnswer: `${opt.key}. ${opt.text}`,
+    correctAnswer: q.correct,
+    result: isCorrect ? 'Correct' : 'Error'
+  });
+
+  if (isCorrect) {
+    scoreBoard.correctAnswers += 1;
+    completedDialogues.add(q.id);
+    showFeedback('correct', 'Correct', 'Correct. Please continue to the next question.');
+    currentQuestionIndex += 1;
+  } else {
+    scoreBoard.wrongAnswers += 1;
+    wrongQuestionHistory.push(q.id);
+    showFeedback('error', 'Error', 'This answer is incorrect. Please try again.');
+  }
+
+  updateStats();
+  updateProgress();
+}
+
+function submitShortAnswer() {
+  const q = physicianQuestions[currentQuestionIndex];
+  const input = document.getElementById('short-answer-input');
+  const answer = input ? input.value.trim() : '';
+
+  if (!answer) {
+    showFeedback('error', 'Error', 'Please enter your answer before submitting.');
+    return;
+  }
+
+  scoreBoard.totalSubmissions += 1;
+  scoreBoard.correctAnswers += 1;
+  completedDialogues.add(q.id);
+
+  answerHistory.push({
+    className: studentGroupInfo.className || '',
+    groupName: studentGroupInfo.groupName || '',
+    submittedAt: new Date().toISOString(),
+    questionId: q.id,
+    question: q.question,
+    selectedAnswer: answer,
+    correctAnswer: '',
+    result: 'Submitted'
+  });
+
+  dialogueScenarioComplete = true;
+  quizCompleted = true;
+
+  updateStats();
+  updateProgress();
+
+  // Critical: immediately move to the Chinese scenario intro after Q3 submit.
+  showChineseChallengeIntro();
+}
+
+function showFeedback(type, title, text) {
+  const feedbackBox = document.getElementById('feedback-box');
+  const feedbackIcon = document.getElementById('feedback-icon');
+  const feedbackTitle = document.getElementById('feedback-title');
+  const feedbackText = document.getElementById('feedback-text');
+
+  if (!feedbackBox) return;
+
+  feedbackBox.classList.remove('hidden', 'bg-emerald-900/40', 'border', 'border-emerald-600/60', 'bg-red-900/40', 'border-red-600/60');
+  feedbackBox.classList.add('border');
+
+  if (type === 'correct') {
+    feedbackBox.classList.add('bg-emerald-900/40', 'border-emerald-600/60');
+    if (feedbackIcon) feedbackIcon.textContent = '✅';
+    if (feedbackTitle) {
+      feedbackTitle.textContent = title;
+      feedbackTitle.className = 'font-bold mb-1 text-emerald-300';
+    }
+  } else {
+    feedbackBox.classList.add('bg-red-900/40', 'border-red-600/60');
+    if (feedbackIcon) feedbackIcon.textContent = '❌';
+    if (feedbackTitle) {
+      feedbackTitle.textContent = title;
+      feedbackTitle.className = 'font-bold mb-1 text-red-300';
+    }
+  }
+
+  if (feedbackText) feedbackText.textContent = text;
+}
+
+function continueLearning() {
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  if (dialogueScenarioComplete) {
+    showChineseChallengeIntro();
+    return;
+  }
+
+  renderQuestion();
+}
+
+function showChineseChallengeIntro() {
+  const dialogueBox = document.getElementById('dialogue-box');
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (dialogueBox) dialogueBox.classList.remove('hidden');
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  setSpeakerUI('⚠️', '中文情境對答挑戰', 'Scenario challenge');
+
+  if (questionText) {
+    questionText.textContent = '以下開始中文情境對答挑戰，答題時間設有限制（會註記在各題），請盡快做出最適當的答覆，了解請按下方「繼續」進入問答。';
+  }
+
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <button type="button" onclick="showChineseScenario()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all">
+        繼續
+      </button>
+    `;
+  }
+}
+
+
+function showChineseScenario() {
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  setSpeakerUI('🏥', '電梯間情境', '中文情境對答挑戰');
+
+  if (questionText) {
+    questionText.innerHTML = `
+      <div class="space-y-4 text-zinc-100 leading-relaxed">
+        <p>（來到了電梯間，神內醫師與藥師在討論病人病情。）</p>
+        <p><span class="text-blue-300 font-semibold">醫師：</span>「2611床之前去看的診所醫師跟我們院內急診的醫師超糊塗的，竟然沒有注意到病人腎功能不好，劑量開過高導致病人中樞神經副作用。你覺得要不要通報病安？」</p>
+        <p><span class="text-emerald-300 font-semibold">藥師：</span>「唉…讓我思考一下，2611床病人真的很衰。」</p>
+        <p class="text-amber-300 font-semibold">殊不知，2611床的病人家屬剛好聽到醫師的言論，因此破口大罵……</p>
+      </div>
+    `;
+  }
+
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <button type="button" onclick="showFamilyChallenge()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all">
+        進入家屬對話
+      </button>
+    `;
+  }
+}
+
+
+
+function playAngryFamilyVoice() {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance('你們醫院怎麼這樣啊！');
+    utterance.lang = 'zh-TW';
+    utterance.rate = 1.05;
+    utterance.pitch = 1.35;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      /zh|Chinese|Taiwan|臺灣|台灣/i.test(v.lang + ' ' + v.name) &&
+      /female|woman|mei|hsiao|han|yating|xiaoyu|ting/i.test(v.name)
+    ) || voices.find(v => /zh|Chinese|Taiwan|臺灣|台灣/i.test(v.lang + ' ' + v.name));
+
+    if (preferred) utterance.voice = preferred;
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.warn('Speech synthesis unavailable:', e);
+  }
+}
+
+
+function startFamilyChallengeTimer() {
+  const timerEl = document.getElementById('family-timer');
+  familyChallengeRemaining = 300;
+
+  if (familyChallengeTimer) clearInterval(familyChallengeTimer);
+
+  const render = () => {
+    const min = Math.floor(familyChallengeRemaining / 60);
+    const sec = familyChallengeRemaining % 60;
+    if (timerEl) timerEl.textContent = `${min}:${String(sec).padStart(2, '0')}`;
+
+    if (familyChallengeRemaining <= 0) {
+      clearInterval(familyChallengeTimer);
+      familyChallengeTimer = null;
+
+      const input = document.getElementById('family-response-input');
+      const answer = input ? input.value.trim() : '';
+
+      recordOpenEndedAnswer(
+        'Q4',
+        '家屬：我就是2611的家屬！你們這樣開錯藥導致我家人出狀況！你們這樣是醫療疏失！請問身為現場藥師的你應該採取什麼行動？',
+        answer
+      );
+
+      reflectiveQuestionIndex = 0;
+      showReflectiveQuestion();
+      return;
+    }
+    familyChallengeRemaining -= 1;
+  };
+
+  render();
+  familyChallengeTimer = setInterval(render, 1000);
+}
+
+
+function showFamilyChallenge() {
+  const dialogueBox = document.getElementById('dialogue-box');
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (dialogueBox) dialogueBox.classList.remove('hidden');
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  setSpeakerUI('😡', '家屬', '2611床病人家屬');
+
+  if (questionText) {
+    questionText.innerHTML = `
+      <div class="space-y-4 text-zinc-100 leading-relaxed">
+        <div class="bg-red-900/30 border border-red-500/60 rounded-xl p-4">
+          <p class="text-red-200 font-semibold mb-2">家屬：</p>
+          <p class="text-lg">「我就是2611的家屬！你們這樣開錯藥導致我家人出狀況！你們這樣是醫療疏失！」</p>
+        </div>
+        <div class="bg-slate-800/70 border border-slate-600 rounded-xl p-4">
+          <p class="font-semibold text-blue-200">請問身為現場藥師的你應該採取什麼行動？</p>
+          <p class="text-amber-300 font-semibold mt-2">限時：<span id="family-timer">5:00</span></p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <div class="space-y-3">
+        <label for="family-response-input" class="block text-blue-200 font-medium">Your answer:</label>
+        <textarea id="family-response-input" rows="6" class="w-full rounded-xl border border-slate-600 bg-slate-900 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="請輸入你的現場回應與處理行動..."></textarea>
+        <button id="family-submit-btn" type="button" onclick="submitFamilyChallengeAnswer()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors">Submit Answer</button>
+      </div>
+    `;
+  }
+
+  playAngryFamilyVoice();
+  startFamilyChallengeTimer();
+}
+
+
+function submitFamilyChallengeAnswer() {
+  const input = document.getElementById('family-response-input');
+  const answer = input ? input.value.trim() : '';
+
+  if (!answer) {
+    showFeedback('error', 'Error', 'Please enter your answer before submitting.');
+    return;
+  }
+
+  if (familyChallengeTimer) {
+    clearInterval(familyChallengeTimer);
+    familyChallengeTimer = null;
+  }
+
+  recordOpenEndedAnswer(
+    'Q4',
+    '家屬：我就是2611的家屬！你們這樣開錯藥導致我家人出狀況！你們這樣是醫療疏失！請問身為現場藥師的你應該採取什麼行動？',
+    answer
+  );
+
+  reflectiveQuestionIndex = 0;
+  showReflectiveQuestion();
+}
+
+
+
+
+function recordOpenEndedAnswer(questionId, question, answer) {
+  scoreBoard.totalSubmissions += 1;
+  scoreBoard.correctAnswers += 1;
+  completedDialogues.add(questionId);
+
+  answerHistory.push({
+    className: studentGroupInfo.className || '',
+    groupName: studentGroupInfo.groupName || '',
+    submittedAt: new Date().toISOString(),
+    questionId: questionId,
+    question: question,
+    selectedAnswer: answer || '',
+    correctAnswer: '',
+    result: answer ? 'Submitted' : 'Time up'
+  });
+
+  updateStats();
+  updateProgress();
+}
+
+function showReflectiveQuestion() {
+  const q = reflectiveQuestions[reflectiveQuestionIndex];
+  const dialogueBox = document.getElementById('dialogue-box');
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (!q) {
+    finishInteractiveGame();
+    return;
+  }
+
+  if (reflectiveTimer) {
+    clearInterval(reflectiveTimer);
+    reflectiveTimer = null;
+  }
+
+  if (dialogueBox) dialogueBox.classList.remove('hidden');
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+
+  setSpeakerUI('💬', '中文情境對答挑戰', q.timeLimit ? '限時簡答題' : '簡答題');
+
+  const timeText = q.timeLimit ? `限時：<span id="reflective-timer">${Math.floor(q.timeLimit / 60)}:${String(q.timeLimit % 60).padStart(2, '0')}</span>` : '不限時間';
+
+  if (questionText) {
+    questionText.innerHTML = `
+      <div class="space-y-4 text-zinc-100 leading-relaxed">
+        <div class="bg-slate-800/70 border border-slate-600 rounded-xl p-4">
+          <p class="font-semibold text-blue-200">${q.question}</p>
+          <p class="text-amber-300 font-semibold mt-2">${timeText}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <div class="space-y-3">
+        <label for="reflective-response-input" class="block text-blue-200 font-medium">Your answer:</label>
+        <textarea id="reflective-response-input" rows="6" class="w-full rounded-xl border border-slate-600 bg-slate-900 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="請輸入你的回覆..."></textarea>
+        <button id="reflective-submit-btn" type="button" onclick="submitReflectiveAnswer()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors">Submit Answer</button>
+      </div>
+    `;
+  }
+
+  if (q.timeLimit) {
+    startReflectiveTimer(q.timeLimit);
+  }
+}
+
+function startReflectiveTimer(seconds) {
+  const timerEl = document.getElementById('reflective-timer');
+  reflectiveRemaining = seconds;
+
+  if (reflectiveTimer) clearInterval(reflectiveTimer);
+
+  const render = () => {
+    const min = Math.floor(reflectiveRemaining / 60);
+    const sec = reflectiveRemaining % 60;
+    if (timerEl) timerEl.textContent = `${min}:${String(sec).padStart(2, '0')}`;
+
+    if (reflectiveRemaining <= 0) {
+      clearInterval(reflectiveTimer);
+      reflectiveTimer = null;
+      submitReflectiveAnswer(true);
+      return;
+    }
+    reflectiveRemaining -= 1;
+  };
+
+  render();
+  reflectiveTimer = setInterval(render, 1000);
+}
+
+function submitReflectiveAnswer(isTimeUp = false) {
+  const q = reflectiveQuestions[reflectiveQuestionIndex];
+  if (!q) {
+    finishInteractiveGame();
+    return;
+  }
+
+  const input = document.getElementById('reflective-response-input');
+  const answer = input ? input.value.trim() : '';
+
+  if (!isTimeUp && !answer) {
+    showFeedback('error', 'Error', 'Please enter your answer before submitting.');
+    return;
+  }
+
+  if (reflectiveTimer) {
+    clearInterval(reflectiveTimer);
+    reflectiveTimer = null;
+  }
+
+  recordOpenEndedAnswer(q.id, q.question, answer);
+
+  reflectiveQuestionIndex += 1;
+
+  if (reflectiveQuestionIndex >= reflectiveQuestions.length) {
+    finishInteractiveGame();
+  } else {
+    showReflectiveQuestion();
+  }
+}
+
+function finishInteractiveGame() {
+  gameCompleted = true;
+  dialogueScenarioComplete = true;
+  quizCompleted = true;
+
+  const questionText = document.getElementById('question-text');
+  const answerOptions = document.getElementById('answer-options');
+  const feedbackBox = document.getElementById('feedback-box');
+
+  if (feedbackBox) feedbackBox.classList.add('hidden');
+  setSpeakerUI('✅', '互動遊戲結束', 'Completed');
+
+  if (questionText) {
+    questionText.innerHTML = `
+      <div class="space-y-3 text-zinc-100 leading-relaxed">
+        <p class="text-emerald-300 font-semibold text-lg">你已完成此互動遊戲。</p>
+        <p>可點選右側或下方的 <span class="text-emerald-300 font-semibold">export record</span> 匯出完整作答報表。</p>
+        <p class="text-zinc-400 text-sm">再次點選 Physician 會重新開始對話流程。</p>
+      </div>
+    `;
+  }
+
+  if (answerOptions) {
+    answerOptions.innerHTML = `
+      <button type="button" onclick="exportCurrentGroupResponses()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-all">📄 export record</button>
+    `;
+  }
+}
+
+function startQuizMode() {
+  startDialogue('doctor');
+}
+
+function updateStats() {
+  const total = document.getElementById('stat-total');
+  const correct = document.getElementById('stat-correct');
+  const wrong = document.getElementById('stat-wrong');
+  const wrongRecords = document.getElementById('stat-wrong-records');
+
+  if (total) total.textContent = scoreBoard.totalSubmissions;
+  if (correct) correct.textContent = scoreBoard.correctAnswers;
+  if (wrong) wrong.textContent = scoreBoard.wrongAnswers;
+  if (wrongRecords) wrongRecords.textContent = wrongQuestionHistory.length;
+}
+
+
+
+function updateProgress() {
+  const progress = document.getElementById('progress-text');
+  if (progress) progress.textContent = `${completedDialogues.size} / 11`;
+}
+
+
+
+function exportCurrentGroupResponses() {
+  const headers = ['Class', 'Group', 'Summitted time', 'Question', 'Selected answer', 'Correct answer', 'Result'];
+  const rows = [headers];
+
+  if (!answerHistory || answerHistory.length === 0) {
+    rows.push([
+      studentGroupInfo.className || '',
+      studentGroupInfo.groupName || '',
+      new Date().toISOString(),
+      '',
+      '',
+      '',
+      ''
+    ]);
+  } else {
+    answerHistory.forEach(record => {
+      const isShortAnswer = record.questionId === 'Q3' || record.result === 'Submitted';
+      rows.push([
+        record.className || studentGroupInfo.className || '',
+        record.groupName || studentGroupInfo.groupName || '',
+        record.submittedAt || '',
+        record.question || '',
+        record.selectedAnswer || '',
+        isShortAnswer ? '' : (record.correctAnswer || ''),
+        record.result || ''
+      ]);
+    });
+  }
+
+  const csv = rows
+    .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+
+  const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  const className = (studentGroupInfo.className || 'class').replace(/[^\w\u4e00-\u9fa5-]/g, '_');
+  const groupName = (studentGroupInfo.groupName || 'group').replace(/[^\w\u4e00-\u9fa5-]/g, '_');
+
+  a.href = url;
+  a.download = `export_record_${className}_${groupName}.csv`;
+  a.style.display = 'none';
+
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY + '_current_group');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.className) {
+        const classInput = document.getElementById('class-input');
+        const classDisplay = document.getElementById('display-class-name');
+        if (classInput) classInput.value = parsed.className;
+        if (classDisplay) classDisplay.textContent = parsed.className;
+      }
+      if (parsed.groupName) {
+        const groupInput = document.getElementById('group-input');
+        const groupDisplay = document.getElementById('display-group-name');
+        if (groupInput) groupInput.value = parsed.groupName;
+        if (groupDisplay) groupDisplay.textContent = parsed.groupName;
+      }
+    }
+  } catch (e) {
+    console.warn('Unable to restore group info:', e);
+  }
+
+  updateStats();
+  updateProgress();
+});
+</script>
+</body>
+</html>
