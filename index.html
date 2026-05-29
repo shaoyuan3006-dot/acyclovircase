@@ -1183,27 +1183,37 @@ function showChineseScenario() {
 
 
 function playAngryFamilyVoice() {
-  try {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+  if (!('speechSynthesis' in window)) return;
 
-    const utterance = new SpeechSynthesisUtterance('你們醫院怎麼這樣啊！我要告你們醫療疏失! 有沒有認真照護病人阿');
+  speechSynthesis.cancel();
+
+  const lines = [
+    '你們醫院怎麼這樣啊！',
+    '我要告你們醫療疏失！',
+    '有沒有認真照護病人阿！'
+  ];
+
+  let index = 0;
+
+  function speakNext() {
+    if (index >= lines.length) return;
+
+    const utterance = new SpeechSynthesisUtterance(lines[index]);
+
     utterance.lang = 'zh-TW';
-    utterance.rate = 1.05;
-    utterance.pitch = 1.35;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.4;
     utterance.volume = 1;
 
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v =>
-      /zh|Chinese|Taiwan|臺灣|台灣/i.test(v.lang + ' ' + v.name) &&
-      /female|woman|mei|hsiao|han|yating|xiaoyu|ting/i.test(v.name)
-    ) || voices.find(v => /zh|Chinese|Taiwan|臺灣|台灣/i.test(v.lang + ' ' + v.name));
+    utterance.onend = () => {
+      index++;
+      setTimeout(speakNext, 300);
+    };
 
-    if (preferred) utterance.voice = preferred;
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {
-    console.warn('Speech synthesis unavailable:', e);
+    speechSynthesis.speak(utterance);
   }
+
+  speakNext();
 }
 
 
