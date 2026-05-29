@@ -1187,7 +1187,7 @@ function playAngryFamilyVoice() {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance('你們醫院怎麼這樣啊！');
+    const utterance = new SpeechSynthesisUtterance('你們醫院怎麼這樣啊！我要告你們醫療疏失! 有沒有認真照護病人阿');
     utterance.lang = 'zh-TW';
     utterance.rate = 1.05;
     utterance.pitch = 1.35;
